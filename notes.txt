@@ -1,0 +1,12 @@
+>>> with open('constants/items.json') as f:
+...     data = json.load(f)
+... 
+>>> out = {k:v for (k,v) in data.items() if v['cost'] >= 4000}
+>>> len(out)
+38
+
+ with open('big_items.json', 'w') as f:
+...     json.dump(out, f)
+
+ with open('constants/items.json') as f:
+...     data = json.load(f)
