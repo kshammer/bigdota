@@ -10,3 +10,33 @@
 
  with open('constants/items.json') as f:
 ...     data = json.load(f)
+
+try the get explorer endpoint 
+
+https://docs.opendota.com/#tag/explorer%2Fpaths%2F~1explorer%2Fget
+
+Example 
+
+https://github.com/odota/core/blob/master/routes/api.js
+
+Schema
+
+https://api.opendota.com/api/schema
+
+
+
+WITH match_ids AS (SELECT match_id FROM public_matches
+          WHERE TRUE
+          AND start_time > ?
+          AND match_id < ?
+          ${order}
+          LIMIT 100)
+          SELECT * FROM
+          (SELECT * FROM public_matches
+          WHERE match_id IN (SELECT match_id FROM match_ids)) matches
+          JOIN
+          (SELECT match_id, string_agg(hero_id::text, ',') radiant_team FROM public_player_matches WHERE match_id IN (SELECT match_id FROM match_ids) AND player_slot <= 127 GROUP BY match_id) radiant_team
+          USING(match_id)
+          JOIN
+          (SELECT match_id, string_agg(hero_id::text, ',') dire_team FROM public_player_matches WHERE match_id IN (SELECT match_id FROM match_ids) AND player_slot > 127 GROUP BY match_id) dire_team
+          USING(match_id)
