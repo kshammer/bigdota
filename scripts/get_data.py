@@ -1,38 +1,46 @@
 import requests
 import time
+import json
+import random
 with open('key.txt') as f:
     key = f.read()
 
-def get_data():
-    print('hello')
+FILE = 'data/matches.json'
+
+def get_data(match_list=0):
     for i in range(10):
-        data = hit_api_old()
-        for info in data:
-            with open('data/old_matches.json', 'a') as f:
-                f.write(str(info))
-                f.write(',\n')
-        time.sleep(600)
-        print(i)
+        while True:
+            if match_list != 0:
+                new_match = match_list.pop(0)
+                new_data = hit_api(new_match)
+            else:
+                new_data = hit_api()
+            if new_data != []:
+                break
+        write_to_disk(new_data, FILE)
+        match_list = get_oldest_match(new_data)
 
+def get_oldest_match(matches):
+    match_ids = []
+    for match in matches:
+        match_ids.append(match['match_id'])
+    random.shuffle(match_ids)
+    return match_ids 
 
-def hit_api_old():
-    r = requests.get('https://api.opendota.com/api/publicMatches?mmr_descending=400&less_than_match_id=5362560977&api_key={}'.format(key))
+def write_to_disk(data, file):
+    for info in data:
+        with open(file, 'a') as f:
+            json.dump(info, f)
+            f.write('\n')
+
+def hit_api(lowest_match=0):
+    if lowest_match == 0:
+        url = 'https://api.opendota.com/api/publicMatches?mmr_descending=4000&api_key={}'.format(key)
+    else:
+        url = 'https://api.opendota.com/api/publicMatches?mmr_descending=4000&less_than_match_id={}&api_key={}'.format(lowest_match, key)
+    r = requests.get(url)
     return r.json()
 
-def get_data_new():
-    print('hello')
-    for i in range(10):
-        data = hit_api_new()
-        for info in data:
-            with open('data/test_new.json', 'a') as f:
-                f.write(str(info))
-                f.write(',\n')
-        time.sleep(300)
-        print(i)
-
-def hit_api_new():
-    r = requests.get('https://api.opendota.com/api/publicMatches?mmr_descending=400&less_than_match_id=5369283534&api_key={}'.format(key))
-    return r.json()
 
 if __name__ == '__main__':
-    get_data_new()
+    get_data()
