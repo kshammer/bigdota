@@ -1,16 +1,41 @@
 import json
 import requests
+import copy
+with open('key.txt') as f:
+    key = f.read()
 
-FILE = 'data/old_matches.json'
+with open('constants/big_items.json') as f:
+    big_items = json.load(f)
+    big_items = set(big_items.keys())
+
+FILE = 'data/matches.json'
+
 
 def parse():
     data = read_match_list()
     for match in data:
         match_data = get_match_data(match['match_id'])
-        purchase_log = get_match_data(match_data)
-        with open('data/old_purchase.json', 'a') as f:
-            json.dump(purchase_log, f)
-            f.write(',\n')
+        purchase_log = get_purchase_log(match_data)
+        cleaned_data = clean_data(purchase_log)
+        with open('data/purchase.json', 'a') as f:
+            json.dump(cleaned_data, f)
+            f.write('\n')
+
+def clean_data(purchase_log):
+    purchase_data = copy.deepcopy(purchase_log)
+    hero_keys = list(purchase_data.keys())
+    hero_keys.remove('match_id')
+    for hero in hero_keys:
+       purchase_data[hero] = filter_big_items(purchase_data[hero])
+
+    return purchase_data
+
+def filter_big_items(item_list):
+    expensive_items = []
+    for item in item_list:
+        if item['key'] in big_items:
+            expensive_items.append(item)
+    return expensive_items
 
 def get_purchase_log(match):
     out = {}
@@ -20,7 +45,7 @@ def get_purchase_log(match):
     return out
 
 def get_match_data(match_id):
-    r = requests.get('https://api.opendota.com/api/matches/{}'.format(match_id))
+    r = requests.get('https://api.opendota.com/api/matches/{}?api_key={}'.format(match_id, key))
     return r.json()
 
 def read_match_list():

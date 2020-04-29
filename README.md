@@ -10,3 +10,5 @@ Last match in 7.25c
 https://api.opendota.com/api/feed?api_key={}&game_mode=7
 
 C:\Users\ksham\.virtualenvs\bigdota-SnVO8qor\Scripts\activate
+
+big items is everything over 4k

@@ -6,11 +6,13 @@ with open('key.txt') as f:
     key = f.read()
 
 FILE = 'data/matches.json'
+MATCH_SET = set()
 
-def get_data(match_list=0):
-    for i in range(10):
+# add another set of less than match ids to get a more varried set
+def get_data(match_list=[]):
+    for i in range(400):
         while True:
-            if match_list != 0:
+            if match_list != []:
                 new_match = match_list.pop(0)
                 new_data = hit_api(new_match)
             else:
@@ -29,9 +31,23 @@ def get_oldest_match(matches):
 
 def write_to_disk(data, file):
     for info in data:
-        with open(file, 'a') as f:
-            json.dump(info, f)
-            f.write('\n')
+        cleaned_data = clean_data(info)
+        if cleaned_data != 0:
+            with open(file, 'a') as f:
+                json.dump(cleaned_data, f)
+                f.write('\n')
+
+def clean_data(match_info):
+    if match_info['lobby_type'] != 7:
+        return 0
+    if match_info['avg_mmr'] == None:
+        return 0
+    if match_info['avg_mmr'] <= 4000:
+        return 0
+    if match_info['match_id'] in MATCH_SET:
+        return 0
+    MATCH_SET.add(match_info['match_id'])
+    return match_info
 
 def hit_api(lowest_match=0):
     if lowest_match == 0:
