@@ -8,13 +8,13 @@ with open('constants/big_items.json') as f:
     big_items = json.load(f)
     big_items = set(big_items.keys())
 
-FILE = 'data/matches.json'
+FILE = 'data/matches.txt'
 
 
 def parse():
     data = read_match_list()
     for match in data:
-        match_data = get_match_data(match['match_id'])
+        match_data = get_match_data(match)
         purchase_log = get_purchase_log(match_data)
         cleaned_data = clean_data(purchase_log)
         with open('data/purchase.json', 'a') as f:
@@ -32,6 +32,8 @@ def clean_data(purchase_log):
 
 def filter_big_items(item_list):
     expensive_items = []
+    if item_list == None:
+        return []
     for item in item_list:
         if item['key'] in big_items:
             expensive_items.append(item)
@@ -49,11 +51,9 @@ def get_match_data(match_id):
     return r.json()
 
 def read_match_list():
-    data_list = []
     with open(FILE, 'r') as f:
-        for jsonObj in f:
-            data = json.loads(jsonObj)
-            data_list.append(data)
+        text = f.read()
+        data_list = text.split('\n')
     return data_list
 
 if __name__ =='__main__':
