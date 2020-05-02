@@ -9,7 +9,7 @@ with open('key.txt') as f:
 
 def get_unix_time_yesterday():
     current_time = time.time()
-    yesterday = current_time - 86400
+    yesterday = current_time - 86400 # one day in unix time
     return int(yesterday)
 
 def read_sql():

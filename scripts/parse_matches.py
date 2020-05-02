@@ -1,6 +1,7 @@
 import json
 import requests
 import copy
+from statistics import mean
 with open('key.txt') as f:
     key = f.read()
 
@@ -13,37 +14,41 @@ FILE = 'data/matches.txt'
 
 def parse():
     data = read_match_list()
+    purchase_dataset = {}
     for match in data:
+        print(match)
         match_data = get_match_data(match)
-        purchase_log = get_purchase_log(match_data)
-        cleaned_data = clean_data(purchase_log)
-        with open('data/purchase.json', 'a') as f:
-            json.dump(cleaned_data, f)
-            f.write('\n')
+        purchase_log = get_purchase_times(match_data)
+        if purchase_log == {}:
+            continue
+        purchase_dataset = join_to_dataset(purchase_dataset,purchase_log)
 
-def clean_data(purchase_log):
-    purchase_data = copy.deepcopy(purchase_log)
-    hero_keys = list(purchase_data.keys())
-    hero_keys.remove('match_id')
-    for hero in hero_keys:
-       purchase_data[hero] = filter_big_items(purchase_data[hero])
+    for item in purchase_dataset.keys():
+        purchase_dataset[item] = mean(purchase_dataset[item])
+    print('writing to disk')
+    with open('data/purchase.json', 'w') as f:
+        json.dump(purchase_dataset, f)
 
-    return purchase_data
+def join_to_dataset(purchase_dataset, purchase_log):
+    for item in purchase_log.keys():
+        if item not in purchase_dataset.keys():
+            purchase_dataset[item] = purchase_log[item]
+        else:
+            purchase_dataset[item].extend(purchase_log[item])
+    return purchase_dataset
 
-def filter_big_items(item_list):
-    expensive_items = []
-    if item_list == None:
-        return []
-    for item in item_list:
-        if item['key'] in big_items:
-            expensive_items.append(item)
-    return expensive_items
-
-def get_purchase_log(match):
+def get_purchase_times(match):
     out = {}
-    out['match_id'] = match['match_id']
-    for x in match['players']:
-        out[x['hero_id']] = x['purchase_log'] 
+    if 'players' not in match.keys():
+        return {}
+    for player in match['players']:
+        if player['purchase_log'] == None:
+            return {}
+        for purchase in player['purchase_log']:
+            if purchase['key'] not in out.keys():
+                out[purchase['key']] = [purchase['time']]
+            else:
+                out[purchase['key']].append(purchase['time'])
     return out
 
 def get_match_data(match_id):
